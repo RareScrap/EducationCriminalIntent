@@ -7,9 +7,14 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.DateFormat;
+import java.text.FieldPosition;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,7 +49,9 @@ public class CrimeListFragment extends Fragment {
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView mTitleTextView;
         private TextView mDateTextView;
+        private ImageView mImageView;
 
+        // TODO: а можно его и не сохранять
         private Crime mCrime;
 
         public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
@@ -53,12 +60,31 @@ public class CrimeListFragment extends Fragment {
 
             mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
             mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
+            mImageView = itemView.findViewById(R.id.crime_solved);
         }
 
         public void bind(Crime crime) {
             mCrime = crime;
             mTitleTextView.setText(mCrime.getTitle());
-            mDateTextView.setText(mCrime.getDate().toString());
+
+            // Используем SimpleDateFormat со своим шаблоном
+            SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getDateInstance();
+            dateFormat.applyPattern("EEEE, MMM d, yyyy");
+
+            // Начинаем день недели с большой буквы
+            /*StringBuffer stringBuffer = new StringBuffer();
+            dateFormat.applyPattern("EEEE, ");
+            dateFormat.format(mCrime.getDate(), stringBuffer, new FieldPosition(0));
+            stringBuffer.replace(0, 1, String.valueOf(stringBuffer.toString().charAt(0)).toUpperCase());
+            dateFormat.applyPattern("MMM d, yyyy");
+            dateFormat.format(mCrime.getDate(), stringBuffer, new FieldPosition(0));
+            mDateTextView.setText(stringBuffer.toString());*/
+
+            // Встроенные в DateFormat шаблон
+            //DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
+
+            mDateTextView.setText(dateFormat.format(mCrime.getDate()));
+            mImageView.setVisibility(mCrime.isSolved() ? View.VISIBLE : View.GONE);
         }
 
         @Override
