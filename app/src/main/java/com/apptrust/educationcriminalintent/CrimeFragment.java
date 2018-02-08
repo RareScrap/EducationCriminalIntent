@@ -1,5 +1,8 @@
 package com.apptrust.educationcriminalintent;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -24,6 +27,7 @@ import static android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class CrimeFragment extends Fragment {
     private static final String ARG_CRIME_ID = "crime_id";
+    private static final String CRIME_ID_INTENT_RESULT_KEY = "com.apptrust.educationcriminalintent.crime_id";
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -81,6 +85,7 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mCrime.setTitle(s.toString());
+                notifyActivity();
             }
             @Override
             public void afterTextChanged(Editable s) {
@@ -98,9 +103,26 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mCrime.setSolved(isChecked);
+                notifyActivity();
             }
         });
 
         return v;
+    }
+
+    /**
+     * Уведомляет активити об обновлении {@link #mCrime}
+     */
+    private void notifyActivity() {
+        getActivity().setResult(Activity.RESULT_OK, new Intent().putExtra(CRIME_ID_INTENT_RESULT_KEY, mCrime.getId()));
+    }
+
+    /**
+     * Парсит {@link Intent}, возвращаемый фрагментом при помощи {@link Activity#setResult(int, Intent)}.
+     * @param intent {@link Intent}, возвращаемый фрагментом при помощи {@link Activity#setResult(int, Intent)}
+     * @return {@link UUID} измененного элемента {@link Crime}
+     */
+    public static UUID getChagedItemId(Intent intent) {
+        return (UUID) intent.getSerializableExtra(CRIME_ID_INTENT_RESULT_KEY);
     }
 }

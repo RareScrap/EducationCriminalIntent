@@ -17,11 +17,14 @@ import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author RareScrap
  */
 public class CrimeListFragment extends Fragment {
+    private static final int UPDATE_ITEM_REQUEST_CODE = 1;
+
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
 
@@ -32,7 +35,7 @@ public class CrimeListFragment extends Fragment {
         mCrimeRecyclerView = view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        updateUI();
+        initUI();
 
         return view;
     }
@@ -40,21 +43,19 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        updateUI();
+        initUI();
     }
 
     /**
-     * Настраивает пользовательский интерфейс {@link CrimeListFragment}
+     * Инициализирует пользовательский интерфейс {@link CrimeListFragment}
      */
-    private void updateUI() {
+    private void initUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
-        } else {
-            mAdapter.notifyDataSetChanged();
         }
     }
 
@@ -102,7 +103,19 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onClick(View view) {
             Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getId());
-            startActivity(intent);
+            startActivityForResult(intent, UPDATE_ITEM_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == UPDATE_ITEM_REQUEST_CODE && data != null) {
+            UUID crimeId = CrimeFragment.getChagedItemId(data);
+            int position = CrimeLab.get(getContext()).getPosition(crimeId);
+            if (position != -1) {
+                mAdapter.notifyItemChanged(position);
+            }
         }
     }
 
