@@ -2,8 +2,8 @@ package com.apptrust.educationcriminalintent;
 
 import android.content.Context;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -15,7 +15,7 @@ public class CrimeLab {
     /** Сслыка на свой экземпляр. Необходим для паттерна "Синглтон" */
     private static CrimeLab sCrimeLab;
     /** Список преступлений (данные) */
-    private List<Crime> mCrimes;
+    private LinkedHashMap<String, Crime> mCrimes;
 
     /**
      * Геттер для {@link #sCrimeLab}. Если {@link #sCrimeLab} - null, то создается новый
@@ -37,12 +37,12 @@ public class CrimeLab {
      * @param context TODO
      */
     private CrimeLab(Context context) {
-        mCrimes = new ArrayList<>();
+        mCrimes = new LinkedHashMap<>();
         for (int i = 0; i < 100; i++) {
             Crime crime = new Crime();
             crime.setTitle("Crime #" + i);
             crime.setSolved(i % 2 == 0); // Для каждого второго объекта
-            mCrimes.add(crime);
+            mCrimes.put(crime.getId().toString(), crime);
         }
     }
 
@@ -50,31 +50,34 @@ public class CrimeLab {
      * Геттер для {@link #mCrimes}
      * @return {@link #mCrimes}
      */
-    public List<Crime> getCrimes() {
+    public LinkedHashMap<String, Crime> getCrimes() {
         return mCrimes;
     }
 
     /**
-     * Возвращает объект {@link CrimeLab} из {@link #mCrimes} с заданым ключом {@link UUID}
+     * Возвращает объект {@link Crime} из {@link #mCrimes} с заданым ключом {@link UUID}
      * @param id Ключ
      * @return Объект {@link Crime}, если тот существуется в {@link #mCrimes}, иначе - null
      */
-    public Crime getCrime(UUID id) {
-        for (Crime crime : mCrimes) {
-            if (crime.getId().equals(id)) {
-                return crime;
-            }
+        public Crime getCrime(UUID id) {
+            return mCrimes.get(id.toString());
         }
-        return null;
-    }
+
 
     public int getPosition(UUID id) {
-        for (int i = 0; i < mCrimes.size(); i++) {
-            Crime crime = mCrimes.get(i);
+        int i = 0;
+        for (Map.Entry<String, Crime> entry : mCrimes.entrySet()) {
+            Crime crime = entry.getValue();
             if (crime.getId().equals(id)) {
                 return i;
             }
+            i++;
         }
         return -1;
+    }
+
+    public Crime getCrimeByIndex(int index) {
+        Map.Entry<String, Crime> entry = (Map.Entry<String, Crime>) mCrimes.entrySet().toArray()[index];
+        return entry.getValue();
     }
 }

@@ -10,13 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.DateFormat;
-import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 /**
@@ -51,7 +48,7 @@ public class CrimeListFragment extends Fragment {
      */
     private void initUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
-        List<Crime> crimes = crimeLab.getCrimes();
+        LinkedHashMap<String, Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
@@ -120,9 +117,9 @@ public class CrimeListFragment extends Fragment {
     }
 
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
-        private List<Crime> mCrimes;
+        private LinkedHashMap<String, Crime> mCrimes;
 
-        public CrimeAdapter(List<Crime> crimes) {
+        public CrimeAdapter(LinkedHashMap<String, Crime> crimes) {
             mCrimes = crimes;
         }
 
@@ -134,7 +131,7 @@ public class CrimeListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(CrimeHolder holder, int position) {
-            Crime crime = mCrimes.get(position);
+            Crime crime = CrimeLab.get(getContext()).getCrimeByIndex(position);
             holder.bind(crime);
         }
 
