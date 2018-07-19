@@ -8,6 +8,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import java.util.LinkedHashMap;
 import java.util.UUID;
@@ -23,16 +26,29 @@ public class CrimePagerActivity extends AppCompatActivity {
     private ViewPager mViewPager;
     private LinkedHashMap<String, Crime> mCrimes;
 
+    private Menu mMenu;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crime_pager);
 
-        UUID crimeId = (UUID) getIntent()
-                .getSerializableExtra(EXTRA_CRIME_ID);
+        mCrimes = CrimeLab.get(this).getCrimes();
 
         mViewPager = (ViewPager) findViewById(R.id.crime_view_pager);
-        mCrimes = CrimeLab.get(this).getCrimes();
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+
+            @Override
+            public void onPageSelected(int position) {
+                if (mMenu != null) processMenuChanges();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
             @Override
@@ -46,12 +62,57 @@ public class CrimePagerActivity extends AppCompatActivity {
             }
         });
 
+        UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
         mViewPager.setCurrentItem(CrimeLab.get(this).getPosition(crimeId));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.crime_pager_activity_menu, menu);
+        this.mMenu = menu;
+
+        processMenuChanges();
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.to_start:
+                mViewPager.setCurrentItem(0);
+                return true;
+            case R.id.to_end:
+                mViewPager.setCurrentItem(mCrimes.size()-1);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public static Intent newIntent(Context packageContext, UUID crimeId) {
         Intent intent = new Intent(packageContext, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
         return intent;
+    }
+
+    private void processMenuChanges() {
+        if (mViewPager.getCurrentItem() == 0) {
+            mMenu.findItem(R.id.to_start).setVisible(false);
+            mMenu.findItem(R.id.to_start).setEnabled(false);
+            mMenu.findItem(R.id.to_end).setVisible(true);
+            mMenu.findItem(R.id.to_end).setEnabled(true);
+        } else if (mViewPager.getCurrentItem() == mCrimes.size()-1) {
+            mMenu.findItem(R.id.to_start).setVisible(true);
+            mMenu.findItem(R.id.to_start).setEnabled(true);
+            mMenu.findItem(R.id.to_end).setVisible(false);
+            mMenu.findItem(R.id.to_end).setEnabled(false);
+        } else {
+            mMenu.findItem(R.id.to_start).setVisible(true);
+            mMenu.findItem(R.id.to_start).setEnabled(true);
+            mMenu.findItem(R.id.to_end).setVisible(true);
+            mMenu.findItem(R.id.to_end).setEnabled(true);
+        }
     }
 }
