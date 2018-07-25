@@ -14,7 +14,6 @@ import android.widget.DatePicker;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 /**
  * @author RareScrap
@@ -24,6 +23,7 @@ public class DatePickerFragment extends DialogFragment {
     public static final String EXTRA_DATE = "com.apptrust.educationcriminalintent.date";
 
     private DatePicker mDatePicker;
+    protected Date date;
 
     public static DatePickerFragment newInstance(Date date) {
         Bundle args = new Bundle();
@@ -36,7 +36,7 @@ public class DatePickerFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Date date = (Date) getArguments().getSerializable(ARG_DATE);
+        date = (Date) getArguments().getSerializable(ARG_DATE);
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
@@ -57,14 +57,29 @@ public class DatePickerFragment extends DialogFragment {
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                int year = mDatePicker.getYear();
-                                int month = mDatePicker.getMonth();
-                                int day = mDatePicker.getDayOfMonth();
-                                Date date = new GregorianCalendar(year, month, day).getTime();
-                                sendResult(Activity.RESULT_OK, date);
+                                sendResult(Activity.RESULT_OK, getDate());
                             }
                         })
+                .setNeutralButton(R.string.time_button,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                sendResult(CrimeFragment.RESULT_CHANGE_PICKER, getDate());
+                            }
+                })
                 .create();
+    }
+
+    /**
+     * Устанавливает выбранную дату в {@link #date}
+     */
+    protected Date getDate() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.YEAR, mDatePicker.getYear());
+        calendar.set(Calendar.MONTH, mDatePicker.getMonth());
+        calendar.set(Calendar.DAY_OF_MONTH, mDatePicker.getDayOfMonth());
+        return calendar.getTime();
     }
 
     private void sendResult(int resultCode, Date date) {

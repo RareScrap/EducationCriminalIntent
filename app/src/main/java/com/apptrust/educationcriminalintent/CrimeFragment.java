@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
@@ -30,7 +31,10 @@ public class CrimeFragment extends Fragment {
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String CRIME_ID_INTENT_RESULT_KEY = "com.apptrust.educationcriminalintent.crime_id";
     private static final String DIALOG_DATE = "DialogDate";
+    private static final String DIALOG_TIME = "DialogTime";
     private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_TIME = 1;
+    public static final int RESULT_CHANGE_PICKER = 2;
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -123,13 +127,43 @@ public class CrimeFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_CHANGE_PICKER) { // Обрабатываем смену пикера
+            FragmentManager manager = getFragmentManager();
+
+            DialogFragment dialog;
+            if (requestCode == REQUEST_DATE) {
+                Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+                dialog = TimePickerFragment.newInstance(date);
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+            } else { // requestCode == REQUEST_TIME
+                Date date = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_DATE);
+                dialog = DatePickerFragment.newInstance(date);
+                dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE);
+            }
+            updateDate();
+
+            dialog.show(manager, DIALOG_TIME);
+            return;
+        }
+
         if (resultCode != Activity.RESULT_OK) {
             return;
         }
-        if (requestCode == REQUEST_DATE) {
-            Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
-            mCrime.setDate(date);
-            updateDate();
+
+        // Штатная работа
+        switch (requestCode) {
+            case REQUEST_DATE: {
+                Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+                mCrime.setDate(date);
+                updateDate();
+                break;
+            }
+            case REQUEST_TIME: {
+                Date date = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_DATE);
+                mCrime.setDate(date);
+                updateDate();
+                break;
+            }
         }
     }
 

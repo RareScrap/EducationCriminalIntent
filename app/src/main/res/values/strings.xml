@@ -8,4 +8,6 @@
 
     <string name="to_start">Scroll to first page</string>
     <string name="to_end">Scroll to last page</string>
+    <string name="time_button">Time</string>
+    <string name="date_button">Date</string>
 </resources>
