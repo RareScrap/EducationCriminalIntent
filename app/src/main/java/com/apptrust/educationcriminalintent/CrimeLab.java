@@ -38,12 +38,6 @@ public class CrimeLab {
      */
     private CrimeLab(Context context) {
         mCrimes = new LinkedHashMap<>();
-        for (int i = 0; i < 100; i++) {
-            Crime crime = new Crime();
-            crime.setTitle("Crime #" + i);
-            crime.setSolved(i % 2 == 0); // Для каждого второго объекта
-            mCrimes.put(crime.getId().toString(), crime);
-        }
     }
 
     /**
@@ -79,5 +73,9 @@ public class CrimeLab {
     public Crime getCrimeByIndex(int index) {
         Map.Entry<String, Crime> entry = (Map.Entry<String, Crime>) mCrimes.entrySet().toArray()[index];
         return entry.getValue();
+    }
+
+    public void addCrime(Crime c) {
+        mCrimes.put(c.getId().toString(), c);
     }
 }
