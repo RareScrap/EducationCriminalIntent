@@ -2,7 +2,9 @@ package com.apptrust.educationcriminalintent;
 
 import android.content.Context;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -12,6 +14,20 @@ import java.util.UUID;
  * @author RareScrap
  */
 public class CrimeLab {
+    public interface OnItemAddListener {
+        void onItemAdd(Crime crime);
+    }
+    public interface OnItemChangeListener {
+        void onItemChange(Crime crime);
+    }
+    public interface OnItemDeleteListener {
+        void onItemDelete(Crime crime);
+    }
+
+    private List<OnItemAddListener> itemAddListeners = new ArrayList<>();
+    private List<OnItemChangeListener> itemChangeListeners = new ArrayList<>();
+    private List<OnItemDeleteListener> itemDeleteListeners = new ArrayList<>();
+
     /** Сслыка на свой экземпляр. Необходим для паттерна "Синглтон" */
     private static CrimeLab sCrimeLab;
     /** Список преступлений (данные) */
@@ -75,7 +91,64 @@ public class CrimeLab {
         return entry.getValue();
     }
 
+    public boolean isEmpty() {
+        return mCrimes.isEmpty();
+    }
+
     public void addCrime(Crime c) {
         mCrimes.put(c.getId().toString(), c);
+        notifyItemAdd(c);
+    }
+
+    public void deleteCrime(UUID crimeId) {
+        Crime deletedCrime = mCrimes.get(crimeId.toString());
+        mCrimes.remove(crimeId.toString());
+        notifyItemDelete(deletedCrime);
+    }
+
+    protected void notifyItemAdd(Crime crime) {
+        for (OnItemAddListener itemAddListener : itemAddListeners) {
+            itemAddListener.onItemAdd(crime);
+        }
+    }
+
+    protected void notifyItemChange(Crime crime) {
+        for (OnItemChangeListener itemChangeListener : itemChangeListeners) {
+            itemChangeListener.onItemChange(crime);
+        }
+    }
+
+    protected void notifyItemDelete(Crime crime) {
+        for (OnItemDeleteListener itemDeleteListener : itemDeleteListeners) {
+            itemDeleteListener.onItemDelete(crime);
+        }
+    }
+
+    // TODO: Как избежать этого boiler-plate кода?
+    public void addItemAddListener(OnItemAddListener itemAddListener) {
+        if (!itemAddListeners.contains(itemAddListener))
+            itemAddListeners.add(itemAddListener);
+    }
+
+    public void removeItemAddListener(OnItemAddListener itemAddListener) {
+        itemAddListeners.remove(itemAddListener);
+    }
+
+    public void addItemChangeListener(OnItemChangeListener itemChangeListener) {
+        if (!itemChangeListeners.contains(itemChangeListener))
+            itemChangeListeners.add(itemChangeListener);
+    }
+
+    public void removeItemChangeListener(OnItemChangeListener itemChangeListener) {
+        itemChangeListeners.remove(itemChangeListener);
+    }
+
+    public void addItemDeleteListener(OnItemDeleteListener itemDeleteListener) {
+        if (!itemDeleteListeners.contains(itemDeleteListener))
+            itemDeleteListeners.add(itemDeleteListener);
+    }
+
+    public void removeItemChangeListener(OnItemDeleteListener itemDeleteListener) {
+        itemDeleteListeners.remove(itemDeleteListener);
     }
 }
