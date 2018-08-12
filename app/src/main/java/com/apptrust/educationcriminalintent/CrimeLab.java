@@ -21,7 +21,7 @@ public class CrimeLab {
         void onItemChange(Crime crime);
     }
     public interface OnItemDeleteListener {
-        void onItemDelete(Crime crime);
+        void onItemDelete(Crime crime, int position);
     }
 
     private List<OnItemAddListener> itemAddListeners = new ArrayList<>();
@@ -100,27 +100,28 @@ public class CrimeLab {
         notifyItemAdd(c);
     }
 
-    public void deleteCrime(UUID crimeId) {
+    public void deleteCrime(UUID crimeId) { // TODO: Test it!
         Crime deletedCrime = mCrimes.get(crimeId.toString());
+        int position = getPosition(crimeId);
         mCrimes.remove(crimeId.toString());
-        notifyItemDelete(deletedCrime);
+        notifyItemDelete(deletedCrime, position);
     }
 
-    protected void notifyItemAdd(Crime crime) {
+    private void notifyItemAdd(Crime crime) {
         for (OnItemAddListener itemAddListener : itemAddListeners) {
             itemAddListener.onItemAdd(crime);
         }
     }
 
-    protected void notifyItemChange(Crime crime) {
+    public void notifyItemChange(Crime crime) {
         for (OnItemChangeListener itemChangeListener : itemChangeListeners) {
             itemChangeListener.onItemChange(crime);
         }
     }
 
-    protected void notifyItemDelete(Crime crime) {
+    private void notifyItemDelete(Crime crime, int position) {
         for (OnItemDeleteListener itemDeleteListener : itemDeleteListeners) {
-            itemDeleteListener.onItemDelete(crime);
+            itemDeleteListener.onItemDelete(crime, position);
         }
     }
 
