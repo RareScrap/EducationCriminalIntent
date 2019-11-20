@@ -73,12 +73,14 @@ public class CrimeListFragment extends Fragment
             mCrimeRecyclerView.setAdapter(mAdapter);
         }
 
+        updateEmptyPlaceholder();
         updateSubtitle();
     }
 
     @Override
     public void onItemDelete(Crime crime, int position) {
         mAdapter.notifyItemRemoved(position);
+        updateEmptyPlaceholder();
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -193,6 +195,13 @@ public class CrimeListFragment extends Fragment
 
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         activity.getSupportActionBar().setSubtitle(subtitle);
+    }
+
+    private void updateEmptyPlaceholder() {
+        if (getView() == null) return;
+        View emptyPlaceholder = getView().findViewById(R.id.empty_placeholder);
+        if (mAdapter.mCrimes.isEmpty()) emptyPlaceholder.setVisibility(View.VISIBLE);
+        else emptyPlaceholder.setVisibility(View.GONE);
     }
 
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
