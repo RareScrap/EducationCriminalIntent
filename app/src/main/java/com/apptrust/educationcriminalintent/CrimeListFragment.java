@@ -23,7 +23,8 @@ import java.util.UUID;
 /**
  * @author RareScrap
  */
-public class CrimeListFragment extends Fragment {
+public class CrimeListFragment extends Fragment
+        implements CrimeLab.OnItemDeleteListener {
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
     private static final int UPDATE_ITEM_REQUEST_CODE = 1;
 
@@ -35,6 +36,7 @@ public class CrimeListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        CrimeLab.get(getActivity()).addItemDeleteListener(this);
     }
 
     @Override
@@ -72,6 +74,11 @@ public class CrimeListFragment extends Fragment {
         }
 
         updateSubtitle();
+    }
+
+    @Override
+    public void onItemDelete(Crime crime, int position) {
+        mAdapter.notifyItemRemoved(position);
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {

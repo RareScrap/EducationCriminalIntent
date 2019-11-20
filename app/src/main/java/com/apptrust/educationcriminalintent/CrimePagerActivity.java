@@ -86,6 +86,15 @@ public class CrimePagerActivity extends AppCompatActivity {
             case R.id.to_end:
                 mViewPager.setCurrentItem(mCrimes.size()-1);
                 return true;
+            case R.id.delete:
+                finish();
+                return false;
+            // И хотя кажется, что onOptionsItemSelected не будет вызван у фрагментов - это не
+            // совсем так. Дело в том, что при любом возвращенном булене в активити onOptionsItemSelected
+            // у фрагментов все равно вызовется. Но если несолько фрагментов обрабатывают нажатие одного
+            // элемента меню, то возврат true в одном из них привет к тому, что onOptionsItemSelected
+            // у другого фрагмента не вызовется
+            // https://stackoverflow.com/a/33680520/6698055
             default:
                 return super.onOptionsItemSelected(item);
         }
