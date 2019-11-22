@@ -1,6 +1,13 @@
 package com.apptrust.educationcriminalintent;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.apptrust.educationcriminalintent.database.CrimeBaseHelper;
+import com.apptrust.educationcriminalintent.database.CrimeCursorWrapper;
+import com.apptrust.educationcriminalintent.database.CrimeDbSchema.CrimeTable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,7 +38,8 @@ public class CrimeLab {
     /** Сслыка на свой экземпляр. Необходим для паттерна "Синглтон" */
     private static CrimeLab sCrimeLab;
     /** Список преступлений (данные) */
-    private LinkedHashMap<String, Crime> mCrimes;
+    private Context mContext; // TODO: имхо, сохранять ссылку на контекст - хуевая идея. Он же запросто может стать неактуальным
+    private SQLiteDatabase mDatabase;
 
     /**
      * Геттер для {@link #sCrimeLab}. Если {@link #sCrimeLab} - null, то создается новый
@@ -53,30 +61,57 @@ public class CrimeLab {
      * @param context TODO
      */
     private CrimeLab(Context context) {
-        mCrimes = new LinkedHashMap<>();
+        // вместо контекста активити пполучаем контекст приложения, т.к. тот более живучий
+        mContext = context.getApplicationContext();
+        mDatabase = new CrimeBaseHelper(mContext)
+                .getWritableDatabase();
     }
 
-    /**
-     * Геттер для {@link #mCrimes}
-     * @return {@link #mCrimes}
-     */
-    public LinkedHashMap<String, Crime> getCrimes() {
-        return mCrimes;
+    private static ContentValues getContentValues(Crime crime) {
+        ContentValues values = new ContentValues();
+        values.put(CrimeTable.Cols.UUID, crime.getId().toString());
+        values.put(CrimeTable.Cols.TITLE, crime.getTitle());
+        values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
+        values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        return values;
     }
 
-    /**
-     * Возвращает объект {@link Crime} из {@link #mCrimes} с заданым ключом {@link UUID}
-     * @param id Ключ
-     * @return Объект {@link Crime}, если тот существуется в {@link #mCrimes}, иначе - null
-     */
-        public Crime getCrime(UUID id) {
-            return mCrimes.get(id.toString());
+    public LinkedHashMap<String, Crime> getCrimes()  {
+        LinkedHashMap<String, Crime> crimes = new LinkedHashMap<>();
+        CrimeCursorWrapper cursor = queryCrimes(null, null);
+        try {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                Crime crime = cursor.getCrime();
+                crimes.put(crime.getId().toString(), crime);
+                cursor.moveToNext();
+            }
+        } finally {
+            cursor.close();
         }
+        return crimes;
+    }
+
+    public Crime getCrime(UUID id) {
+        CrimeCursorWrapper cursor = queryCrimes(
+                CrimeTable.Cols.UUID + " = ?",
+                new String[] { id.toString() }
+        );
+        try {
+            if (cursor.getCount() == 0) {
+                return null;
+            }
+            cursor.moveToFirst();
+            return cursor.getCrime();
+        } finally {
+            cursor.close();
+        }
+    }
 
 
     public int getPosition(UUID id) {
         int i = 0;
-        for (Map.Entry<String, Crime> entry : mCrimes.entrySet()) {
+        for (Map.Entry<String, Crime> entry : getCrimes().entrySet()) {
             Crime crime = entry.getValue();
             if (crime.getId().equals(id)) {
                 return i;
@@ -87,17 +122,27 @@ public class CrimeLab {
     }
 
     public Crime getCrimeByIndex(int index) {
-        Map.Entry<String, Crime> entry = (Map.Entry<String, Crime>) mCrimes.entrySet().toArray()[index];
+        Map.Entry<String, Crime> entry = (Map.Entry<String, Crime>) getCrimes().entrySet().toArray()[index];
         return entry.getValue();
     }
 
     public boolean isEmpty() {
-        return mCrimes.isEmpty();
+        return getCrimes().isEmpty();
     }
 
     public void addCrime(Crime c) {
-        mCrimes.put(c.getId().toString(), c);
+        ContentValues values = getContentValues(c);
+        mDatabase.insert(CrimeTable.NAME, null, values);
         notifyItemAdd(c);
+    }
+
+    public void updateCrime(Crime crime) {
+        String uuidString = crime.getId().toString();
+        ContentValues values = getContentValues(crime);
+        mDatabase.update(CrimeTable.NAME, values,
+                CrimeTable.Cols.UUID + " = ?", // ? предотвращает SQL инъекции
+                new String[] { uuidString });
+        notifyItemChange(crime);
     }
 
     public void deleteCrime(UUID crimeId) { // TODO: Test it!
@@ -105,6 +150,19 @@ public class CrimeLab {
         int position = getPosition(crimeId);
         mCrimes.remove(crimeId.toString());
         notifyItemDelete(deletedCrime, position);
+    }
+
+    private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs) {
+        Cursor cursor = mDatabase.query(
+                CrimeTable.NAME,
+                null, // columns - с null выбираются все столбцы
+                whereClause,
+                whereArgs,
+                null, // groupBy
+                null, // having
+                null // orderBy
+        );
+        return new CrimeCursorWrapper(cursor);
     }
 
     private void notifyItemAdd(Crime crime) {

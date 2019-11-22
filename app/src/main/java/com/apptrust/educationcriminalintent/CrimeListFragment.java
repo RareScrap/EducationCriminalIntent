@@ -71,6 +71,9 @@ public class CrimeListFragment extends Fragment
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.setCrimes(crimes);
+            mAdapter.notifyDataSetChanged();
         }
 
         updateEmptyPlaceholder();
@@ -226,6 +229,10 @@ public class CrimeListFragment extends Fragment
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        public void setCrimes(LinkedHashMap<String, Crime> crimes) {
+            mCrimes = crimes;
         }
     }
 }
