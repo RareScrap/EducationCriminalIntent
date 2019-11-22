@@ -146,10 +146,12 @@ public class CrimeLab {
     }
 
     public void deleteCrime(UUID crimeId) { // TODO: Test it!
-        Crime deletedCrime = mCrimes.get(crimeId.toString());
-        int position = getPosition(crimeId);
-        mCrimes.remove(crimeId.toString());
-        notifyItemDelete(deletedCrime, position);
+        Crime crime = getCrime(crimeId);
+        mDatabase.delete(CrimeTable.NAME,
+                CrimeTable.Cols.UUID + " = ?",
+                new String[] { crimeId.toString() });
+
+        notifyItemDelete(crime, getPosition(crimeId));
     }
 
     private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs) {
