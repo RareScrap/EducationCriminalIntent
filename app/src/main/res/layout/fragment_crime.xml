@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:padding="16dp"
     android:orientation="vertical"
     android:layout_width="match_parent"
@@ -37,6 +37,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/crime_suspect_text"/>
+
+    <Button
+        android:id="@+id/btn_call_to_suspect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Call"
+        android:visibility="gone"
+        tools:visibility="visible"/>
 
     <Button
         android:id="@+id/crime_report"

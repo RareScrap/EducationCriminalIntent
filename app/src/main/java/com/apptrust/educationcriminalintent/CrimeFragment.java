@@ -1,17 +1,21 @@
 package com.apptrust.educationcriminalintent;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -25,10 +29,12 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.Date;
 import java.util.UUID;
 
+import static android.provider.ContactsContract.CommonDataKinds.Phone;
 import static android.widget.CompoundButton.OnCheckedChangeListener;
 
 /**
@@ -45,6 +51,7 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_TIME = 1;
     public static final int RESULT_CHANGE_PICKER = 2;
     private static final int REQUEST_CONTACT = 3;
+    private static final int REQUEST_CONTACT_PHONE_NUMBER = 4;
 
     private Crime mCrime;
     private EditText mTitleField;
@@ -52,6 +59,9 @@ public class CrimeFragment extends Fragment {
     private CheckBox mSolvedCheckBox;
     private Button mSuspectButton;
     private Button mReportButton;
+    private Button mCallButton;
+
+    private String suspectPhone;
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -153,21 +163,40 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        final Intent pickContact = new Intent(Intent.ACTION_PICK,
-                ContactsContract.Contacts.CONTENT_URI);
         mSuspectButton = (Button) v.findViewById(R.id.crime_suspect);
         mSuspectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                startActivityForResult(pickContact, REQUEST_CONTACT);
+                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_CONTACTS)
+                        != PackageManager.PERMISSION_GRANTED) {
+
+                    if (shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
+                        /*ActivityCompat.*/requestPermissions(/*getActivity(),*/
+                                new String[]{Manifest.permission.READ_CONTACTS},
+                                REQUEST_CONTACT_PHONE_NUMBER);
+                    } else {
+                        Toast.makeText(getContext(), R.string.read_contact_permission_denied, Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                } else pickContact();
             }
         });
         if (mCrime.getSuspect() != null) {
             mSuspectButton.setText(mCrime.getSuspect());
         }
 
+        mCallButton = v.findViewById(R.id.btn_call_to_suspect);
+        mCallButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent phoneCall = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:"+suspectPhone));
+                startActivity(phoneCall);
+            }
+        });
+
         // Дизейблим кнопку, если нет приожений, способных отреагировать на интент
         PackageManager packageManager = getActivity().getPackageManager();
-        if (packageManager.resolveActivity(pickContact,
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        if (packageManager.resolveActivity(intent,
                 PackageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
         }
@@ -221,7 +250,9 @@ public class CrimeFragment extends Fragment {
                     // Определение полей, значения которых должны быть
                     // возвращены запросом.
                     String[] queryFields = new String[] {
-                            ContactsContract.Contacts.DISPLAY_NAME
+                            ContactsContract.Contacts.DISPLAY_NAME,
+                            ContactsContract.Contacts.HAS_PHONE_NUMBER,
+                            ContactsContract.Contacts._ID
                     };
                     // Выполнение запроса - contactUri здесь выполняет функции
                     // условия "where"
@@ -237,11 +268,29 @@ public class CrimeFragment extends Fragment {
                         String suspect = c.getString(0);
                         mCrime.setSuspect(suspect);
                         mSuspectButton.setText(suspect);
+
+                        boolean hasPhoneHumber = c.getString(1).equals("1");
+                        if (hasPhoneHumber) {
+                            int id = c.getInt(2);
+                            suspectPhone = getContactPhoneNumber(id);
+                            mCallButton.setVisibility(View.VISIBLE);
+                        }
+
                     } finally {
                         c.close();
                     }
                 }
+                break;
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CONTACT_PHONE_NUMBER
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            pickContact();
         }
     }
 
@@ -301,5 +350,21 @@ public class CrimeFragment extends Fragment {
      */
     public static UUID getChagedItemId(Intent intent) {
         return (UUID) intent.getSerializableExtra(CRIME_ID_INTENT_RESULT_KEY);
+    }
+
+    private void pickContact() {
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        startActivityForResult(intent, REQUEST_CONTACT);
+    }
+
+    private String getContactPhoneNumber(int contactId) {
+        ContentResolver cr = getActivity().getContentResolver();
+        Cursor cursor = cr.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                Phone.CONTACT_ID + " = " + contactId, null, null);
+
+        cursor.moveToFirst();
+        String number = cursor.getString(cursor.getColumnIndex(Phone.NUMBER));
+        cursor.close();
+        return number;
     }
 }
