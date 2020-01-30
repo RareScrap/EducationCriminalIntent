@@ -9,6 +9,7 @@ import com.apptrust.educationcriminalintent.database.CrimeBaseHelper;
 import com.apptrust.educationcriminalintent.database.CrimeCursorWrapper;
 import com.apptrust.educationcriminalintent.database.CrimeDbSchema.CrimeTable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -135,6 +136,11 @@ public class CrimeLab {
         ContentValues values = getContentValues(c);
         mDatabase.insert(CrimeTable.NAME, null, values);
         notifyItemAdd(c);
+    }
+
+    public File getPhotoFile(Crime crime) {
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, crime.getPhotoFilename());
     }
 
     public void updateCrime(Crime crime) {
