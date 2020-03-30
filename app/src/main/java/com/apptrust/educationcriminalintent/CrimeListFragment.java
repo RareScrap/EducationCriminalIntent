@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,6 +40,7 @@ public class CrimeListFragment extends Fragment
      */
     public interface Callbacks {
         void onCrimeSelected(Crime crime);
+        void onCrimeRemoved(Crime crime);
     }
 
     @Override
@@ -60,6 +62,7 @@ public class CrimeListFragment extends Fragment
         }
 
         updateUI();
+        setUpItemTouchHelper();
 
         return view;
     }
@@ -254,5 +257,28 @@ public class CrimeListFragment extends Fragment
         public void setCrimes(LinkedHashMap<String, Crime> crimes) {
             mCrimes = crimes;
         }
+    }
+
+    private void setUpItemTouchHelper() {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            // Нужен для реализаци drag&drop которая нам ни к чему
+            @Override
+            public boolean onMove(RecyclerView rv, RecyclerView.ViewHolder vh, RecyclerView.ViewHolder t) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                CrimeHolder crimeHolder = (CrimeHolder) viewHolder;
+                CrimeLab.get(getActivity()).deleteCrime(crimeHolder.mCrime.getId());
+
+                mAdapter.notifyItemRemoved(CrimeLab.get(getActivity()).getPosition(crimeHolder.mCrime.getId()));
+
+                updateUI();
+                mCallbacks.onCrimeRemoved(crimeHolder.mCrime);
+            }
+        };
+        ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        mItemTouchHelper.attachToRecyclerView(mCrimeRecyclerView);
     }
 }
