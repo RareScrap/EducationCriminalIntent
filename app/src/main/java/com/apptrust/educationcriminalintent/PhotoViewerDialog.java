@@ -7,6 +7,7 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
 public class PhotoViewerDialog extends DialogFragment {
@@ -24,8 +25,14 @@ public class PhotoViewerDialog extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_photo, container);
+        final View view = inflater.inflate(R.layout.dialog_photo, container);
         imageView = view.findViewById(R.id.photo);
+        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                System.out.println(view.getWidth() + "___" + view.getHeight());
+            }
+        });
         return view;
     }
 

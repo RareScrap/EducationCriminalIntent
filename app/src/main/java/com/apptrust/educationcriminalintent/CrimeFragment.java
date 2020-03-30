@@ -3,6 +3,7 @@ package com.apptrust.educationcriminalintent;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -76,6 +77,15 @@ public class CrimeFragment extends Fragment {
 
     private String suspectPhone;
 
+    private Callbacks mCallbacks;
+
+    /**
+     * Необходимый интерфейс для активности-хоста.
+     */
+    public interface Callbacks {
+        void onCrimeUpdated(Crime crime);
+    }
+
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
@@ -96,7 +106,19 @@ public class CrimeFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        updateCrime();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
     }
 
     /**
@@ -135,7 +157,7 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mCrime.setTitle(s.toString());
-                notifyActivity();
+                updateCrime();//notifyActivity();
             }
             @Override
             public void afterTextChanged(Editable s) {
@@ -161,7 +183,7 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mCrime.setSolved(isChecked);
-                notifyActivity();
+                updateCrime();//notifyActivity();
             }
         });
 
@@ -269,6 +291,7 @@ public class CrimeFragment extends Fragment {
                 Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
                 dialog = TimePickerFragment.newInstance(date);
                 dialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
+                updateCrime();
             } else { // requestCode == REQUEST_TIME
                 Date date = (Date) data.getSerializableExtra(TimePickerFragment.EXTRA_DATE);
                 dialog = DatePickerFragment.newInstance(date);
@@ -322,6 +345,7 @@ public class CrimeFragment extends Fragment {
                         c.moveToFirst();
                         String suspect = c.getString(0);
                         mCrime.setSuspect(suspect);
+                        updateCrime();
                         mSuspectButton.setText(suspect);
 
                         boolean hasPhoneHumber = c.getString(1).equals("1");
@@ -342,6 +366,7 @@ public class CrimeFragment extends Fragment {
                         "com.apptrust.educationcriminalintent.fileprovider",
                         mPhotoFile);
                 getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                updateCrime();
                 updatePhotoView();
                 break;
             }
@@ -438,5 +463,10 @@ public class CrimeFragment extends Fragment {
             Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), mPhotoView.getWidth(), mPhotoView.getHeight());
             mPhotoView.setImageBitmap(bitmap);
         }
+    }
+
+    private void updateCrime() {
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+        mCallbacks.onCrimeUpdated(mCrime);
     }
 }

@@ -1,5 +1,6 @@
 package com.apptrust.educationcriminalintent;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -31,6 +32,14 @@ public class CrimeListFragment extends Fragment
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
     private boolean mSubtitleVisible;
+    private Callbacks mCallbacks;
+
+    /**
+     * Обязательный интерфейс для активности-хоста.
+     */
+    public interface Callbacks {
+        void onCrimeSelected(Crime crime);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,21 +59,33 @@ public class CrimeListFragment extends Fragment
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
         }
 
-        initUI();
+        updateUI();
 
         return view;
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context; // В самой зависимости нет ничего плохого, но ее важно документировать.
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
-        initUI();
+        updateUI();
     }
 
     /**
      * Инициализирует пользовательский интерфейс {@link CrimeListFragment}
      */
-    private void initUI() {
+    public void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         LinkedHashMap<String, Crime> crimes = crimeLab.getCrimes();
 
@@ -129,8 +150,7 @@ public class CrimeListFragment extends Fragment
 
         @Override
         public void onClick(View view) {
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
-            startActivityForResult(intent, UPDATE_ITEM_REQUEST_CODE);
+            mCallbacks.onCrimeSelected(mCrime);
         }
     }
 
@@ -174,8 +194,8 @@ public class CrimeListFragment extends Fragment
 
                 mAdapter.notifyItemChanged(CrimeLab.get(getActivity()).getPosition(crime.getId())); // TODO: не работает?
 
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
-                startActivity(intent);
+                updateUI();
+                mCallbacks.onCrimeSelected(crime);
                 return true;
             case R.id.show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;

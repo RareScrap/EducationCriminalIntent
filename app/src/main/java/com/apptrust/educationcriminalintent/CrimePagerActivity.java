@@ -19,7 +19,8 @@ import java.util.UUID;
 /**
  * @author RareScrap
  */
-public class CrimePagerActivity extends AppCompatActivity {
+public class CrimePagerActivity extends AppCompatActivity
+    implements CrimeFragment.Callbacks {
     private static final String EXTRA_CRIME_ID =
             "com.apptrust.educationcriminalintent.crime_id";
 
@@ -124,4 +125,7 @@ public class CrimePagerActivity extends AppCompatActivity {
             mMenu.findItem(R.id.to_end).setEnabled(true);
         }
     }
+
+    @Override
+    public void onCrimeUpdated(Crime crime) {}
 }
