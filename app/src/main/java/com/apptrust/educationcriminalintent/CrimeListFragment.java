@@ -18,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
@@ -132,8 +131,7 @@ public class CrimeListFragment extends Fragment
             mTitleTextView.setText(mCrime.getTitle());
 
             // Используем SimpleDateFormat со своим шаблоном
-            SimpleDateFormat dateFormat = (SimpleDateFormat) DateFormat.getDateInstance();
-            dateFormat.applyPattern("EEEE, MMM d, yyyy");
+            DateFormat dateFormat = DateFormat.getDateInstance();
 
             // Начинаем день недели с большой буквы
             /*StringBuffer stringBuffer = new StringBuffer();

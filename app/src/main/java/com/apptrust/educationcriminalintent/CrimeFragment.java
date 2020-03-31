@@ -400,7 +400,8 @@ public class CrimeFragment extends Fragment {
     }
 
     private void updateDate() {
-        mDateButton.setText(mCrime.getDate().toString());
+        java.text.DateFormat dateFormat = java.text.DateFormat.getDateInstance();
+        mDateButton.setText(dateFormat.format(mCrime.getDate()));
     }
 
     private String getCrimeReport() {
