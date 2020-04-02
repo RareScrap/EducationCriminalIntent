@@ -274,7 +274,7 @@ public class CrimeFragment extends Fragment {
         mPhotoView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                updatePhotoView();
+                if (isAdded()) updatePhotoView();
             }
         });
 
@@ -303,7 +303,7 @@ public class CrimeFragment extends Fragment {
             return;
         }
 
-        if (resultCode != Activity.RESULT_OK) {
+        if (resultCode != Activity.RESULT_OK || requestCode != REQUEST_PHOTO) {
             return;
         }
 
@@ -368,6 +368,20 @@ public class CrimeFragment extends Fragment {
                 getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 updateCrime();
                 updatePhotoView();
+
+                final String accessibilityMsg;
+                if (resultCode == Activity.RESULT_OK && mPhotoFile == null || !mPhotoFile.exists()) {
+                    accessibilityMsg = getString(R.string.crime_photo_image_remove);
+                } else {
+                    accessibilityMsg = getString(R.string.crime_photo_image_set);
+                }
+                mPhotoView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPhotoView.announceForAccessibility(accessibilityMsg);
+                    }
+                }, 1000); // TODO: Понятия не имею зачем нужна задержка, но в книге пишут что нужна
+
                 break;
             }
         }
@@ -460,9 +474,11 @@ public class CrimeFragment extends Fragment {
     private void updatePhotoView() {
         if (mPhotoFile == null || !mPhotoFile.exists()) {
             mPhotoView.setImageDrawable(null);
+            mPhotoView.setContentDescription(getString(R.string.crime_photo_no_image_description));
         } else {
             Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), mPhotoView.getWidth(), mPhotoView.getHeight());
             mPhotoView.setImageBitmap(bitmap);
+            mPhotoView.setContentDescription(getString(R.string.crime_photo_image_description));
         }
     }
 
